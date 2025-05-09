@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grow Better | Smart Garden Planning</title>
+  <link href="style.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="bg-green-50 text-gray-800">
+  <!-- Header -->
+  <header class="bg-green-600 text-white p-6 shadow-md">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">🌿 Grow Better</h1>
+      <nav>
+        <a href="#features" class="mr-4 hover:underline">Features</a>
+        <a href="#planner" class="hover:underline">Planner</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="py-16 px-6 text-center bg-white shadow-inner">
+    <h2 class="text-4xl font-bold mb-4">Plan, Track, and Grow Smarter</h2>
+    <p class="text-lg max-w-xl mx-auto mb-6">
+      Your personal planting calendar and garden assistant tailored to Provo, Utah’s climate.
+    </p>
+    <a href="#planner" class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-green-700 transition">
+      Try the Planner
+    </a>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="py-20 px-6 bg-green-100">
+    <div class="max-w-5xl mx-auto text-center">
+      <h3 class="text-3xl font-semibold mb-12">What You Can Do</h3>
+      <div class="grid md:grid-cols-3 gap-10 text-left">
+        <div class="bg-white p-6 rounded-xl shadow">
+          <h4 class="text-xl font-bold mb-2">📅 Custom Planting Calendar</h4>
+          <p>Enter your ZIP code and see optimal seed-start, transplant, and harvest windows.</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow">
+          <h4 class="text-xl font-bold mb-2">📈 Interactive Growing Chart</h4>
+          <p>Visualize your garden timeline with an easy-to-use Gantt chart.</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow">
+          <h4 class="text-xl font-bold mb-2">🌦 Frost-Aware Planning</h4>
+          <p>Plans adjust to your local frost dates to keep your garden thriving.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Planner Section -->
+  <section id="planner" class="py-20 px-6 bg-white">
+    <div class="max-w-5xl mx-auto text-center">
+      <h3 class="text-3xl font-semibold mb-6">Try the Planting Planner</h3>
+      <p class="mb-6">Enter your plants and get a visual growing schedule.</p>
+
+      <div id="form-container" class="bg-white p-6 rounded-xl shadow mb-8 text-left">
+        <h4 class="text-xl font-bold mb-4">Add a Plant</h4>
+        <label for="plant-name">Plant Name:</label>
+        <input type="text" id="plant-name" class="border p-1 mb-2 w-full"/><br/>
+
+        <label for="days-to-maturity">Days to Maturity:</label>
+        <input type="number" id="days-to-maturity" class="border p-1 mb-2 w-full"/><br/>
+
+        <label for="location">ZIP Code:</label>
+        <input type="text" id="location" class="border p-1 mb-2 w-full"/><br/>
+
+        <label for="direct-sow">Direct Sow Outside:</label>
+        <input type="checkbox" id="direct-sow" class="ml-2"/><br/><br/>
+
+        <button onclick="addPlant()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+          Add Plant
+        </button>
+      </div>
+
+      <div id="chart" class="bg-gray-100 rounded-xl p-4 shadow-inner min-h-[300px]"></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-green-600 text-white text-center p-4 mt-10">
+    <p>&copy; 2025 Grow Better | Built with 🌱 in Provo, UT</p>
+  </footer>
+
+  <!-- Planner Script -->
+  <script>
+    var plants = [
+  {
+    name: 'Tomato',
+    startSeedsIndoorsDate: new Date('2025-03-22'),
+    transplantDate: new Date('2025-05-15'),
+    harvestStartDate: new Date('2025-08-03'), // 80 days from transplant
+    directSow: false
+  },
+  {
+    name: 'Bell Pepper',
+    startSeedsIndoorsDate: new Date('2025-03-22'),
+    transplantDate: new Date('2025-05-15'),
+    harvestStartDate: new Date('2025-08-03'), // 80 days
+    directSow: false
+  },
+  {
+    name: 'Cucumber',
+    startSeedsIndoorsDate: new Date('2025-04-01'),
+    transplantDate: new Date('2025-05-20'),
+    harvestStartDate: new Date('2025-07-10'), // 50 days
+    directSow: true
+  },
+  {
+    name: 'Zucchini',
+    startSeedsIndoorsDate: new Date('2025-04-01'),
+    transplantDate: new Date('2025-05-20'),
+    harvestStartDate: new Date('2025-07-04'), // 45 days
+    directSow: true
+  },
+  {
+    name: 'Carrot',
+    startSeedsIndoorsDate: new Date('2025-04-01'),
+    transplantDate: new Date('2025-04-01'),
+    harvestStartDate: new Date('2025-06-20'), // 80 days
+    directSow: true
+  },
+  {
+    name: 'Lettuce',
+    startSeedsIndoorsDate: new Date('2025-03-15'),
+    transplantDate: new Date('2025-03-30'),
+    harvestStartDate: new Date('2025-05-01'), // 30 days
+    directSow: true
+  },
+  {
+    name: 'Spinach',
+    startSeedsIndoorsDate: new Date('2025-03-10'),
+    transplantDate: new Date('2025-03-25'),
+    harvestStartDate: new Date('2025-04-30'), // 35 days
+    directSow: true
+  },
+  {
+    name: 'Green Bean',
+    startSeedsIndoorsDate: new Date('2025-04-25'),
+    transplantDate: new Date('2025-05-20'),
+    harvestStartDate: new Date('2025-07-10'), // 50 days
+    directSow: true
+  },
+  {
+    name: 'Peas',
+    startSeedsIndoorsDate: new Date('2025-03-01'),
+    transplantDate: new Date('2025-03-15'),
+    harvestStartDate: new Date('2025-05-15'), // 60 days
+    directSow: true
+  },
+  {
+    name: 'Beet',
+    startSeedsIndoorsDate: new Date('2025-04-01'),
+    transplantDate: new Date('2025-04-15'),
+    harvestStartDate: new Date('2025-06-15'), // 60 days
+    directSow: true
+  }
+];
+
+    function subtractDays(date, days) {
+      return new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
+    }
+
+    function addDays(date, days) {
+      return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+    }
+
+    function getFrostDates(location) {
+      var frostDates = {
+        '84601': { lastFrost: new Date('2025-05-15'), firstFrost: new Date('2025-10-15') },
+        '12345': { lastFrost: new Date('2025-05-15'), firstFrost: new Date('2025-10-15') },
+        '67890': { lastFrost: new Date('2025-04-20'), firstFrost: new Date('2025-10-30') }
+      };
+      return frostDates[location] || { lastFrost: new Date('2025-05-01'), firstFrost: new Date('2025-10-01') };
+    }
+
+    function updateChart() {
+      d3.select('#chart').html('');
+
+      var minDate = d3.min(plants, d => d.directSow ? d.transplantDate : d.startSeedsIndoorsDate);
+      var maxDate = d3.max(plants, d => addDays(d.harvestStartDate, 60));
+
+      var xScale = d3.scaleTime()
+        .domain([subtractDays(minDate, 30), maxDate])
+        .range([100, 1100]);
+
+      var svg = d3.select('#chart')
+        .append('svg')
+        .attr('width', 1200)
+        .attr('height', plants.length * 60 + 50);
+
+      plants.forEach((plant, index) => {
+        var yPosition = index * 60 + 20;
+
+        svg.append('text')
+          .attr('x', 10)
+          .attr('y', yPosition + 15)
+          .text(plant.name)
+          .attr('class', 'plant-label');
+
+        if (!plant.directSow) {
+          svg.append('rect')
+            .attr('x', xScale(plant.startSeedsIndoorsDate))
+            .attr('y', yPosition)
+            .attr('width', xScale(plant.transplantDate) - xScale(plant.startSeedsIndoorsDate))
+            .attr('height', 20)
+            .attr('fill', '#00FF00');
+
+          svg.append('text')
+            .attr('x', xScale(plant.startSeedsIndoorsDate) + 5)
+            .attr('y', yPosition + 15)
+            .text('Indoors')
+            .attr('class', 'plant-label');
+        }
+
+        svg.append('rect')
+          .attr('x', xScale(plant.transplantDate))
+          .attr('y', yPosition)
+          .attr('width', xScale(plant.harvestStartDate) - xScale(plant.transplantDate))
+          .attr('height', 20)
+          .attr('fill', '#00cc66');
+
+        svg.append('text')
+          .attr('x', xScale(plant.transplantDate) + 5)
+          .attr('y', yPosition + 15)
+          .text('Outdoors')
+          .attr('class', 'plant-label');
+
+        svg.append('rect')
+          .attr('x', xScale(plant.harvestStartDate))
+          .attr('y', yPosition)
+          .attr('width', 1000 - xScale(plant.harvestStartDate))
+          .attr('height', 20)
+          .attr('fill', '#FF0000');
+
+        svg.append('text')
+          .attr('x', xScale(plant.harvestStartDate) + 5)
+          .attr('y', yPosition + 15)
+          .text('Harvest')
+          .attr('class', 'plant-label');
+
+        svg.append('foreignObject')
+          .attr('x', 1150)
+          .attr('y', yPosition)
+          .attr('width', 100)
+          .attr('height', 20)
+          .append('xhtml:button')
+          .attr('class', 'remove-button')
+          .style('background-color', '#ff6666')
+          .style('color', 'white')
+          .style('border', 'none')
+          .style('cursor', 'pointer')
+          .style('padding', '2px 5px')
+          .style('border-radius', '3px')
+          .text('Remove')
+          .on('click', () => {
+            plants.splice(index, 1);
+            updateChart();
+          });
+      });
+
+      svg.append('g')
+        .attr('transform', 'translate(0,' + (plants.length * 60) + ')')
+        .call(d3.axisBottom(xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b')));
+    }
+
+    function addPlant() {
+      var name = document.getElementById('plant-name').value;
+      var daysToMaturity = parseInt(document.getElementById('days-to-maturity').value);
+      var location = document.getElementById('location').value;
+      var directSow = document.getElementById('direct-sow').checked;
+
+      if (name && daysToMaturity && location) {
+        var frostDates = getFrostDates(location);
+        var transplantDate = frostDates.lastFrost;
+        var startSeedsIndoorsDate = directSow ? transplantDate : subtractDays(frostDates.lastFrost, 56);
+        var harvestStartDate = addDays(transplantDate, daysToMaturity);
+
+        plants.push({
+          name: name,
+          startSeedsIndoorsDate: startSeedsIndoorsDate,
+          transplantDate: transplantDate,
+          harvestStartDate: harvestStartDate,
+          directSow: directSow
+        });
+        updateChart();
+      } else {
+        alert('Please fill out all fields.');
+      }
+    }
+
+    updateChart();
+  </script>
+</body>
+</html>
