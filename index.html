@@ -1,79 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Grow Better | Smart Garden Planning</title>
-  <link href="style.css" rel="stylesheet">
+  <title>Grow Better | Plant Growth Planner</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .hidden { display: none; }
+    #project-details-panel {
+      max-height: 500px;
+      transition: all 0.4s ease-in-out;
+      overflow: hidden;
+    }
+    #project-details-panel.collapsed {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-top: 0;
+      opacity: 0;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 0.75rem;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .action-btn {
+        background-color: transparent;
+        border: 1px solid #ccc;
+        color: #333;
+        cursor: pointer;
+        padding: 2px 8px;
+        margin: 0 2px;
+        border-radius: 99px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    .action-btn:hover { background-color: #e5e7eb; }
+    .action-btn.delete:hover { background-color: #fecaca; color: #dc2626; }
+  </style>
 </head>
 <body class="bg-green-50 text-gray-800">
-  <!-- Header -->
+
   <header class="bg-green-600 text-white p-6 shadow-md">
     <div class="max-w-5xl mx-auto flex justify-between items-center">
-      <h1 class="text-2xl font-bold">🌿 Grow Better</h1>
-      <nav>
-        <a href="#features" class="mr-4 hover:underline">Features</a>
-        <a href="#planner" class="hover:underline">Planner</a>
-      </nav>
+      <h1 class="text-2xl font-bold">🌱 Plant Growth Planner</h1>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="py-16 px-6 text-center bg-white shadow-inner">
-    <h2 class="text-4xl font-bold mb-4">Plan, Track, and Grow Smarter</h2>
-    <p class="text-lg max-w-xl mx-auto mb-6">
-      Your personal planting calendar and garden assistant tailored to Provo, Utah’s climate.
-    </p>
-    <a href="#planner" class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-green-700 transition">
-      Try the Planner
-    </a>
-  </section>
-
-  <!-- Features Section -->
-  <section id="features" class="py-20 px-6 bg-green-100">
-    <div class="max-w-5xl mx-auto text-center">
-      <h3 class="text-3xl font-semibold mb-12">What You Can Do</h3>
-      <div class="grid md:grid-cols-3 gap-10 text-left">
-        <div class="bg-white p-6 rounded-xl shadow">
-          <h4 class="text-xl font-bold mb-2">📅 Custom Planting Calendar</h4>
-          <p>Enter your ZIP code and see optimal seed-start, transplant, and harvest windows.</p>
-        </div>
-        <div class="bg-white p-6 rounded-xl shadow">
-          <h4 class="text-xl font-bold mb-2">📈 Interactive Growing Chart</h4>
-          <p>Visualize your garden timeline with an easy-to-use Gantt chart.</p>
-        </div>
-        <div class="bg-white p-6 rounded-xl shadow">
-          <h4 class="text-xl font-bold mb-2">🌦 Frost-Aware Planning</h4>
-          <p>Plans adjust to your local frost dates to keep your garden thriving.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Planner Section -->
   <section id="planner" class="py-20 px-6 bg-white">
     <div class="max-w-5xl mx-auto text-center">
-      <h3 class="text-3xl font-semibold mb-6">Try the Planting Planner</h3>
-      <p class="mb-6">Enter your plants and get a visual growing schedule.</p>
+      <h3 class="text-3xl font-semibold mb-6">Plan Your Garden</h3>
+      <p class="mb-6">Visually track planting, growing, and event windows for all your plants.</p>
+      
+      <div class="bg-white rounded-xl shadow mb-8 text-left max-w-md mx-auto">
+        <div id="project-details-header" class="p-6 flex justify-between items-center cursor-pointer">
+          <h4 class="text-xl font-bold">⚙️ Project Details</h4>
+          <span id="project-details-icon" class="text-xl font-bold transform transition-transform duration-300"></span>
+        </div>
+        <div id="project-details-panel" class="px-6 pb-6 overflow-hidden">
+            <div class="pb-4">
+                <h5 class="text-lg font-semibold mb-2">Frost Dates (Optional)</h5>
+                <p class="text-sm text-gray-600 mb-4">Set your frost dates to anchor the planting schedule.</p>
+                <label for="last-frost">Last Frost Date:</label>
+                <input type="date" id="last-frost" class="border p-1 mb-2 w-full"/><br/>
+                <label for="first-frost">First Frost Date:</label>
+                <input type="date" id="first-frost" class="border p-1 mb-2 w-full"/><br/>
+            </div>
+            <div class="border-t pt-4">
+                <h5 class="text-lg font-semibold mb-2">Data Management</h5>
+                <p class="text-sm text-gray-600 mb-4">Save your current plan to your browser, or load a previously saved plan.</p>
+                <div class="flex space-x-4">
+                    <button onclick="saveGarden()" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save Garden</button>
+                    <button onclick="loadGarden()" class="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Load Garden</button>
+                </div>
+            </div>
+        </div>
+      </div>
 
-      <div id="form-container" class="bg-white p-6 rounded-xl shadow mb-8 text-left">
-        <h4 class="text-xl font-bold mb-4">Add a Plant</h4>
-        <label for="plant-name">Plant Name:</label>
-        <input type="text" id="plant-name" class="border p-1 mb-2 w-full"/><br/>
-
-        <label for="days-to-maturity">Days to Maturity:</label>
-        <input type="number" id="days-to-maturity" class="border p-1 mb-2 w-full"/><br/>
-
-        <label for="location">ZIP Code:</label>
-        <input type="text" id="location" class="border p-1 mb-2 w-full"/><br/>
-
-        <label for="direct-sow">Direct Sow Outside:</label>
-        <input type="checkbox" id="direct-sow" class="ml-2"/><br/><br/>
-
-        <button onclick="addPlant()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-          Add Plant
+      <div class="mb-8">
+        <button onclick="openModal()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-bold text-lg shadow-md">
+          ＋ Add New Plant
         </button>
       </div>
 
@@ -81,219 +106,359 @@
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="bg-green-600 text-white text-center p-4 mt-10">
-    <p>&copy; 2025 Grow Better | Built with 🌱 in Provo, UT</p>
-  </footer>
+  <div id="plant-modal" class="modal-overlay hidden">
+    <div class="modal-content text-left">
+      <form id="plant-form">
+        <div class="flex justify-between items-center mb-4">
+            <h4 id="modal-title" class="text-2xl font-bold">Add a Plant</h4>
+            <button type="button" onclick="closeModal()" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+        </div>
 
-  <!-- Planner Script -->
+        <label for="plant-name">Plant Name:</label>
+        <input type="text" id="plant-name" class="border p-1 mb-2 w-full" required/><br/>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label for="plant-category">Category:</label>
+                <select id="plant-category" class="border p-1 mb-2 w-full"><option value="tree">Tree</option><option value="shrub">Shrub</option><option value="flower">Flower</option><option value="vine">Vine</option><option value="ground-cover">Ground Cover</option></select>
+            </div>
+            <div>
+                <label for="plant-type">Type:</label>
+                <select id="plant-type" onchange="togglePerennialFields()" class="border p-1 mb-2 w-full"><option value="annual">Annual</option><option value="perennial">Perennial</option></select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+            <label class="flex items-center space-x-2"><input type="checkbox" id="established" onchange="togglePlantingFields()"><span>Established</span></label>
+            <label class="flex items-center space-x-2"><input type="checkbox" id="blooms" onchange="toggleBloomFields()"><span>Blooms</span></label>
+            <label class="flex items-center space-x-2"><input type="checkbox" id="bears-fruit" onchange="toggleFruitFields()"><span>Bears Fruit</span></label>
+        </div>
+        
+        <div id="planting-fields"><label class="flex items-center space-x-2"><input type="checkbox" id="direct-sow"><span>Direct Sow Outside</span></label></div>
+
+        <div id="perennial-options" class="hidden mt-4 border-t pt-4 space-y-2">
+             <label class="flex items-center space-x-2 font-semibold">
+                <input type="checkbox" id="add-pruning" onchange="togglePruningFields()">
+                <span>Add Pruning Window</span>
+            </label>
+            <!-- NEW: Waking up days input -->
+            <div>
+                <label for="waking-up-days" class="font-semibold">Wakes up (days before last frost):</label>
+                <input type="number" id="waking-up-days" class="border p-1 w-full" value="30"/>
+            </div>
+        </div>
+
+        <div id="pruning-fields" class="hidden mt-4 border-t pt-4">
+          <h5 class="font-semibold text-lg mb-2">Pruning Details</h5>
+          <label for="prune-start">Prune Start Date:</label><input type="date" id="prune-start" class="border p-1 mb-2 w-full"/><br/>
+          <label for="prune-window">Prune Window (days):</label><input type="number" id="prune-window" class="border p-1 mb-2 w-full" value="14"/><br/>
+        </div>
+
+        <div id="bloom-fields" class="hidden mt-4 border-t pt-4">
+          <h5 class="font-semibold text-lg mb-2">Bloom Details</h5>
+          <label for="bloom-start">Bloom Start Date:</label><input type="date" id="bloom-start" class="border p-1 mb-2 w-full"/><br/>
+          <label for="bloom-duration">Bloom Duration (days):</label><input type="number" id="bloom-duration" class="border p-1 mb-2 w-full" value="30"/><br/>
+          <label for="plant-color">Bloom Color:</label><input type="color" id="plant-color" value="#8b5cf6" class="border p-1 mb-2 w-full h-10"/><br/>
+        </div>
+
+        <div id="fruit-fields" class="hidden mt-4 border-t pt-4">
+          <h5 class="font-semibold text-lg mb-2">Harvest Details</h5>
+          <div>
+            <label for="days-to-maturity">Days to Maturity:</label>
+            <div class="flex items-center space-x-2">
+                <input type="number" id="days-to-maturity" placeholder="e.g., 75" class="border p-1 w-full"/>
+                <button type="button" onclick="estimateHarvestDate()" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 text-sm whitespace-nowrap">Estimate Start</button>
+            </div>
+          </div>
+          <label for="harvest-start" class="mt-2 block">Harvest Start Date:</label><input type="date" id="harvest-start" class="border p-1 mb-2 w-full"/><br/>
+          <label for="harvest-window">Harvest Window (days):</label><input type="number" id="harvest-window" class="border p-1 mb-2 w-full" value="21"/><br/>
+          <label for="fruit-color">Fruit Color:</label><input type="color" id="fruit-color" value="#db2777" class="border p-1 mb-2 w-full h-10"/><br/>
+        </div>
+
+        <button type="submit" id="modal-submit-button" class="bg-green-600 text-white px-4 py-2 mt-4 rounded hover:bg-green-700 w-full">Add Plant</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="bg-green-600 text-white text-center p-4 mt-10"><p>&copy; 2025 Grow Better | Built with 🌱</p></footer>
+
   <script>
-    var plants = [
-  {
-    name: 'Tomato',
-    startSeedsIndoorsDate: new Date('2025-03-22'),
-    transplantDate: new Date('2025-05-15'),
-    harvestStartDate: new Date('2025-08-03'), // 80 days from transplant
-    directSow: false
-  },
-  {
-    name: 'Bell Pepper',
-    startSeedsIndoorsDate: new Date('2025-03-22'),
-    transplantDate: new Date('2025-05-15'),
-    harvestStartDate: new Date('2025-08-03'), // 80 days
-    directSow: false
-  },
-  {
-    name: 'Cucumber',
-    startSeedsIndoorsDate: new Date('2025-04-01'),
-    transplantDate: new Date('2025-05-20'),
-    harvestStartDate: new Date('2025-07-10'), // 50 days
-    directSow: true
-  },
-  {
-    name: 'Zucchini',
-    startSeedsIndoorsDate: new Date('2025-04-01'),
-    transplantDate: new Date('2025-05-20'),
-    harvestStartDate: new Date('2025-07-04'), // 45 days
-    directSow: true
-  },
-  {
-    name: 'Carrot',
-    startSeedsIndoorsDate: new Date('2025-04-01'),
-    transplantDate: new Date('2025-04-01'),
-    harvestStartDate: new Date('2025-06-20'), // 80 days
-    directSow: true
-  },
-  {
-    name: 'Lettuce',
-    startSeedsIndoorsDate: new Date('2025-03-15'),
-    transplantDate: new Date('2025-03-30'),
-    harvestStartDate: new Date('2025-05-01'), // 30 days
-    directSow: true
-  },
-  {
-    name: 'Spinach',
-    startSeedsIndoorsDate: new Date('2025-03-10'),
-    transplantDate: new Date('2025-03-25'),
-    harvestStartDate: new Date('2025-04-30'), // 35 days
-    directSow: true
-  },
-  {
-    name: 'Green Bean',
-    startSeedsIndoorsDate: new Date('2025-04-25'),
-    transplantDate: new Date('2025-05-20'),
-    harvestStartDate: new Date('2025-07-10'), // 50 days
-    directSow: true
-  },
-  {
-    name: 'Peas',
-    startSeedsIndoorsDate: new Date('2025-03-01'),
-    transplantDate: new Date('2025-03-15'),
-    harvestStartDate: new Date('2025-05-15'), // 60 days
-    directSow: true
-  },
-  {
-    name: 'Beet',
-    startSeedsIndoorsDate: new Date('2025-04-01'),
-    transplantDate: new Date('2025-04-15'),
-    harvestStartDate: new Date('2025-06-15'), // 60 days
-    directSow: true
-  }
-];
+    // MODIFIED: Data structure updated for perennials
+    let plants = [{
+      id: 1, name: 'Raspberry', category: 'shrub', type: 'perennial',
+      isEstablished: true, hasBlooms: true, hasFruit: true,
+      fruitColor: '#e30b5d',
+      bloomStartDate: new Date('2025-05-20'), bloomDuration: 31, color: '#fecdd3',
+      harvestStartDate: new Date('2025-06-25'), harvestWindow: 35,
+      hasPruningWindow: true,
+      pruneStartDate: new Date('2025-03-01'), pruneWindowDays: 28,
+      wakingUpDaysBeforeFrost: 45, // NEW
+    }, {
+      id: 2, name: 'Zinnia', category: 'flower', type: 'annual', // MODIFIED
+      isEstablished: false, directSow: false,
+      startSeedsIndoorsDate: new Date('2025-03-20'), transplantDate: new Date('2025-05-15'),
+      hasBlooms: true, hasFruit: false,
+      bloomStartDate: new Date('2025-06-15'), bloomDuration: 102, color: '#f43f5e',
+    }];
+    
+    let editState = { active: false, plantId: null };
 
-    function subtractDays(date, days) {
-      return new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
-    }
-
-    function addDays(date, days) {
-      return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
-    }
-
-    function getFrostDates(location) {
-      var frostDates = {
-        '84601': { lastFrost: new Date('2025-05-15'), firstFrost: new Date('2025-10-15') },
-        '12345': { lastFrost: new Date('2025-05-15'), firstFrost: new Date('2025-10-15') },
-        '67890': { lastFrost: new Date('2025-04-20'), firstFrost: new Date('2025-10-30') }
-      };
-      return frostDates[location] || { lastFrost: new Date('2025-05-01'), firstFrost: new Date('2025-10-01') };
-    }
-
-    function updateChart() {
-      d3.select('#chart').html('');
-
-      var minDate = d3.min(plants, d => d.directSow ? d.transplantDate : d.startSeedsIndoorsDate);
-      var maxDate = d3.max(plants, d => addDays(d.harvestStartDate, 60));
-
-      var xScale = d3.scaleTime()
-        .domain([subtractDays(minDate, 30), maxDate])
-        .range([100, 1100]);
-
-      var svg = d3.select('#chart')
-        .append('svg')
-        .attr('width', 1200)
-        .attr('height', plants.length * 60 + 50);
-
-      plants.forEach((plant, index) => {
-        var yPosition = index * 60 + 20;
-
-        svg.append('text')
-          .attr('x', 10)
-          .attr('y', yPosition + 15)
-          .text(plant.name)
-          .attr('class', 'plant-label');
-
-        if (!plant.directSow) {
-          svg.append('rect')
-            .attr('x', xScale(plant.startSeedsIndoorsDate))
-            .attr('y', yPosition)
-            .attr('width', xScale(plant.transplantDate) - xScale(plant.startSeedsIndoorsDate))
-            .attr('height', 20)
-            .attr('fill', '#00FF00');
-
-          svg.append('text')
-            .attr('x', xScale(plant.startSeedsIndoorsDate) + 5)
-            .attr('y', yPosition + 15)
-            .text('Indoors')
-            .attr('class', 'plant-label');
+    // --- DYNAMIC FORM LOGIC ---
+    function toggleBloomFields() { document.getElementById('bloom-fields').classList.toggle('hidden', !document.getElementById('blooms').checked); }
+    function toggleFruitFields() { document.getElementById('fruit-fields').classList.toggle('hidden', !document.getElementById('bears-fruit').checked); }
+    function togglePlantingFields() { document.getElementById('planting-fields').classList.toggle('hidden', document.getElementById('established').checked); }
+    function togglePruningFields() { document.getElementById('pruning-fields').classList.toggle('hidden', !document.getElementById('add-pruning').checked); }
+    function togglePerennialFields() {
+        const isPerennial = document.getElementById('plant-type').value === 'perennial';
+        document.getElementById('perennial-options').classList.toggle('hidden', !isPerennial);
+        if (!isPerennial) {
+            document.getElementById('add-pruning').checked = false;
+            togglePruningFields();
         }
-
-        svg.append('rect')
-          .attr('x', xScale(plant.transplantDate))
-          .attr('y', yPosition)
-          .attr('width', xScale(plant.harvestStartDate) - xScale(plant.transplantDate))
-          .attr('height', 20)
-          .attr('fill', '#00cc66');
-
-        svg.append('text')
-          .attr('x', xScale(plant.transplantDate) + 5)
-          .attr('y', yPosition + 15)
-          .text('Outdoors')
-          .attr('class', 'plant-label');
-
-        svg.append('rect')
-          .attr('x', xScale(plant.harvestStartDate))
-          .attr('y', yPosition)
-          .attr('width', 1000 - xScale(plant.harvestStartDate))
-          .attr('height', 20)
-          .attr('fill', '#FF0000');
-
-        svg.append('text')
-          .attr('x', xScale(plant.harvestStartDate) + 5)
-          .attr('y', yPosition + 15)
-          .text('Harvest')
-          .attr('class', 'plant-label');
-
-        svg.append('foreignObject')
-          .attr('x', 1150)
-          .attr('y', yPosition)
-          .attr('width', 100)
-          .attr('height', 20)
-          .append('xhtml:button')
-          .attr('class', 'remove-button')
-          .style('background-color', '#ff6666')
-          .style('color', 'white')
-          .style('border', 'none')
-          .style('cursor', 'pointer')
-          .style('padding', '2px 5px')
-          .style('border-radius', '3px')
-          .text('Remove')
-          .on('click', () => {
-            plants.splice(index, 1);
-            updateChart();
-          });
-      });
-
-      svg.append('g')
-        .attr('transform', 'translate(0,' + (plants.length * 60) + ')')
-        .call(d3.axisBottom(xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b')));
+    }
+    
+    // --- UTILITY FUNCTIONS ---
+    function subtractDays(d, days) { const date = new Date(d); date.setDate(date.getDate() - days); return date; }
+    function addDays(d, days) { const date = new Date(d); date.setDate(date.getDate() + Number(days)); return date; }
+    function formatDateForInput(date) {
+        if (!date || isNaN(date)) return '';
+        return date.toISOString().split('T')[0];
     }
 
-    function addPlant() {
-      var name = document.getElementById('plant-name').value;
-      var daysToMaturity = parseInt(document.getElementById('days-to-maturity').value);
-      var location = document.getElementById('location').value;
-      var directSow = document.getElementById('direct-sow').checked;
+    // --- LOCAL STORAGE FUNCTIONS ---
+    function saveGarden() {
+        localStorage.setItem('plantGanttGarden', JSON.stringify({
+            lastFrost: document.getElementById('last-frost').value,
+            firstFrost: document.getElementById('first-frost').value,
+            plants: plants
+        }));
+        alert('✅ Your garden has been saved!');
+    }
 
-      if (name && daysToMaturity && location) {
-        var frostDates = getFrostDates(location);
-        var transplantDate = frostDates.lastFrost;
-        var startSeedsIndoorsDate = directSow ? transplantDate : subtractDays(frostDates.lastFrost, 56);
-        var harvestStartDate = addDays(transplantDate, daysToMaturity);
-
-        plants.push({
-          name: name,
-          startSeedsIndoorsDate: startSeedsIndoorsDate,
-          transplantDate: transplantDate,
-          harvestStartDate: harvestStartDate,
-          directSow: directSow
+    function loadGarden(isInitialLoad = false) {
+        const savedData = localStorage.getItem('plantGanttGarden');
+        if (!savedData) {
+            if (!isInitialLoad) alert('No saved data found.');
+            const year = new Date().getFullYear();
+            document.getElementById('last-frost').value = `${year}-05-15`;
+            document.getElementById('first-frost').value = `${year}-10-15`;
+            return;
+        }
+        if (!isInitialLoad && !confirm('Loading data will overwrite unsaved changes. Continue?')) return;
+        const gardenData = JSON.parse(savedData);
+        document.getElementById('last-frost').value = gardenData.lastFrost || '';
+        document.getElementById('first-frost').value = gardenData.firstFrost || '';
+        plants = gardenData.plants.map(plant => {
+            ['bloomStartDate', 'harvestStartDate', 'startSeedsIndoorsDate', 'transplantDate', 'pruneStartDate']
+            .forEach(field => { if (plant[field]) plant[field] = new Date(plant[field]); });
+            return plant;
         });
         updateChart();
+        if (!isInitialLoad) alert('✅ Garden loaded successfully!');
+    }
+    
+    // --- MODAL & FORM LOGIC ---
+    function openModal(plantId = null) {
+      document.getElementById('plant-form').reset();
+      editState = { active: !!plantId, plantId: plantId };
+      const modalTitle = document.getElementById('modal-title'), submitButton = document.getElementById('modal-submit-button');
+
+      if (editState.active) {
+        modalTitle.textContent = 'Edit Plant';
+        submitButton.textContent = 'Update Plant';
+        const plantToEdit = plants.find(p => p.id === plantId);
+        if (plantToEdit) {
+            document.getElementById('plant-name').value = plantToEdit.name;
+            document.getElementById('plant-category').value = plantToEdit.category;
+            document.getElementById('plant-type').value = plantToEdit.type;
+            document.getElementById('established').checked = plantToEdit.isEstablished;
+            document.getElementById('direct-sow').checked = plantToEdit.directSow;
+            document.getElementById('blooms').checked = plantToEdit.hasBlooms;
+            document.getElementById('bears-fruit').checked = plantToEdit.hasFruit;
+            document.getElementById('bloom-start').value = formatDateForInput(plantToEdit.bloomStartDate);
+            document.getElementById('bloom-duration').value = plantToEdit.bloomDuration || 30;
+            document.getElementById('plant-color').value = plantToEdit.color || '#8b5cf6';
+            document.getElementById('days-to-maturity').value = plantToEdit.daysToMaturity || '';
+            document.getElementById('harvest-start').value = formatDateForInput(plantToEdit.harvestStartDate);
+            document.getElementById('harvest-window').value = plantToEdit.harvestWindow || 21;
+            document.getElementById('fruit-color').value = plantToEdit.fruitColor || '#db2777';
+            if (plantToEdit.type === 'perennial') {
+                document.getElementById('add-pruning').checked = plantToEdit.hasPruningWindow;
+                document.getElementById('prune-start').value = formatDateForInput(plantToEdit.pruneStartDate);
+                document.getElementById('prune-window').value = plantToEdit.pruneWindowDays || 14;
+                document.getElementById('waking-up-days').value = plantToEdit.wakingUpDaysBeforeFrost || 30; // NEW
+            }
+        }
       } else {
-        alert('Please fill out all fields.');
+        modalTitle.textContent = 'Add a Plant';
+        submitButton.textContent = 'Add Plant';
       }
+      togglePlantingFields();
+      toggleBloomFields();
+      toggleFruitFields();
+      togglePerennialFields();
+      togglePruningFields();
+      document.getElementById('plant-modal').classList.remove('hidden');
     }
 
-    updateChart();
+    function closeModal() { document.getElementById('plant-modal').classList.add('hidden'); }
+
+    function handleSubmit(event) {
+        event.preventDefault();
+        const isEstablished = document.getElementById('established').checked, lastFrostValue = document.getElementById('last-frost').value;
+        if (!isEstablished && !lastFrostValue) { alert("Please set a 'Last Frost Date' before adding a new, non-established plant."); return; }
+
+        const plantData = {
+            name: document.getElementById('plant-name').value, category: document.getElementById('plant-category').value,
+            type: document.getElementById('plant-type').value, isEstablished: isEstablished,
+            hasBlooms: document.getElementById('blooms').checked, hasFruit: document.getElementById('bears-fruit').checked,
+        };
+        if (!plantData.name) { alert('Please enter a plant name.'); return; }
+        if (!plantData.isEstablished) {
+            const lastFrostDate = new Date(lastFrostValue + 'T00:00:00');
+            plantData.directSow = document.getElementById('direct-sow').checked;
+            plantData.transplantDate = lastFrostDate;
+            plantData.startSeedsIndoorsDate = (plantData.directSow) ? lastFrostDate : subtractDays(lastFrostDate, 56);
+        }
+        if (plantData.hasBlooms) {
+            plantData.bloomStartDate = new Date(document.getElementById('bloom-start').value + 'T00:00:00');
+            plantData.bloomDuration = parseInt(document.getElementById('bloom-duration').value, 10);
+            plantData.color = document.getElementById('plant-color').value;
+        }
+        if (plantData.hasFruit) {
+            plantData.daysToMaturity = parseInt(document.getElementById('days-to-maturity').value, 10);
+            plantData.harvestStartDate = new Date(document.getElementById('harvest-start').value + 'T00:00:00');
+            plantData.harvestWindow = parseInt(document.getElementById('harvest-window').value, 10);
+            plantData.fruitColor = document.getElementById('fruit-color').value;
+        }
+        if (plantData.type === 'perennial') {
+            plantData.hasPruningWindow = document.getElementById('add-pruning').checked;
+            if (plantData.hasPruningWindow) {
+                plantData.pruneStartDate = new Date(document.getElementById('prune-start').value + 'T00:00:00');
+                plantData.pruneWindowDays = parseInt(document.getElementById('prune-window').value, 10);
+            }
+            plantData.wakingUpDaysBeforeFrost = parseInt(document.getElementById('waking-up-days').value, 10); // NEW
+        }
+        
+        if (editState.active) {
+            const plantIndex = plants.findIndex(p => p.id === editState.plantId);
+            if (plantIndex > -1) plants[plantIndex] = { ...plants[plantIndex], ...plantData };
+        } else {
+            plantData.id = Date.now();
+            plants.push(plantData);
+        }
+        closeModal();
+        updateChart();
+    }
+
+    function estimateHarvestDate() {
+        const lastFrostValue = document.getElementById('last-frost').value, isEstablished = document.getElementById('established').checked;
+        if (!lastFrostValue && !isEstablished) { alert("Please set the 'Last Frost Date' in Project Details first!"); return; }
+        const daysToMaturity = parseInt(document.getElementById('days-to-maturity').value, 10);
+        if (isNaN(daysToMaturity)) { alert("Please enter a number for 'Days to Maturity'."); return; }
+        const transplantDate = new Date(lastFrostValue + 'T00:00:00');
+        const estimatedDate = addDays(transplantDate, daysToMaturity);
+        document.getElementById('harvest-start').value = formatDateForInput(estimatedDate);
+    }
+    
+    function deletePlant(plantId) {
+        if (confirm('Are you sure you want to delete this plant?')) {
+            plants = plants.filter(p => p.id !== plantId);
+            updateChart();
+        }
+    }
+
+    // --- CHARTING LOGIC ---
+    function updateChart() {
+      d3.select('#chart').html('');
+      const lastFrostValue = document.getElementById('last-frost').value, firstFrostValue = document.getElementById('first-frost').value;
+      const lastFrostDate = lastFrostValue ? new Date(lastFrostValue) : null, firstFrostDate = firstFrostValue ? new Date(firstFrostValue) : null;
+      if (plants.length === 0) { d3.select('#chart').append('p').attr('class', 'text-gray-500').text('Your garden is empty. Add a plant to get started!'); return; }
+      
+      const allDates = plants.flatMap(p => {
+          const bloomEndDate = p.bloomStartDate && p.bloomDuration ? addDays(p.bloomStartDate, p.bloomDuration) : null;
+          const harvestEndDate = p.harvestStartDate && p.harvestWindow ? addDays(p.harvestStartDate, p.harvestWindow) : null;
+          const pruneEndDate = p.pruneStartDate && p.pruneWindowDays ? addDays(p.pruneStartDate, p.pruneWindowDays) : null;
+          return [ p.startSeedsIndoorsDate, p.transplantDate, p.bloomStartDate, bloomEndDate, p.harvestStartDate, harvestEndDate, p.pruneStartDate, pruneEndDate ].filter(Boolean);
+      });
+      if (lastFrostDate) allDates.push(lastFrostDate);
+      if (firstFrostDate) allDates.push(firstFrostDate);
+      if (allDates.length === 0) { const today = new Date(); allDates.push(subtractDays(today, 30), addDays(today, 30)); }
+      
+      const minDate = d3.min(allDates), maxDate = d3.max(allDates);
+      const xScale = d3.scaleTime().domain([subtractDays(minDate, 30), addDays(maxDate, 30)]).range([150, 1100]);
+      const svg = d3.select('#chart').append('svg').attr('width', 1200).attr('height', plants.length * 60 + 70);
+      
+      plants.forEach((plant, index) => {
+        const y = index * 60 + 20;
+        svg.append('text').attr('x', 10).attr('y', y + 15).text(`${plant.name} (${plant.type})`).attr('class', 'plant-label');
+        
+        // MODIFIED: Perennial drawing logic
+        if (plant.type === 'perennial') {
+            const chartStart = xScale.domain()[0];
+            const chartEnd = xScale.domain()[1];
+            const endOfSeasonDate = firstFrostDate || chartEnd;
+            let wakingUpDate = lastFrostDate;
+            if (lastFrostDate && plant.wakingUpDaysBeforeFrost) {
+                wakingUpDate = subtractDays(lastFrostDate, plant.wakingUpDaysBeforeFrost);
+            }
+
+            // Dormant bar for the whole year
+            svg.append('rect').attr('x', xScale(chartStart)).attr('y', y + 5).attr('width', xScale(chartEnd) - xScale(chartStart)).attr('height', 10).attr('fill', '#d1d5db').append('title').text('Dormant');
+            
+            // Waking up bar
+            if(wakingUpDate) {
+                 svg.append('rect').attr('x', xScale(wakingUpDate)).attr('y', y).attr('width', xScale(lastFrostDate) - xScale(wakingUpDate)).attr('height', 20).attr('fill', '#a7f3d0').append('title').text('Waking Up');
+            }
+
+            // Active growth bar from last frost to first event or end of season
+            let firstEventDate = endOfSeasonDate;
+            if (plant.hasBlooms && plant.bloomStartDate) firstEventDate = d3.min([firstEventDate, plant.bloomStartDate]);
+            if (plant.hasFruit && plant.harvestStartDate) firstEventDate = d3.min([firstEventDate, plant.harvestStartDate]);
+            svg.append('rect').attr('x', xScale(lastFrostDate)).attr('y', y).attr('width', xScale(firstEventDate) - xScale(lastFrostDate)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth');
+        
+        } else { // Annual logic
+            const activeGrowthStart = plant.isEstablished ? lastFrostDate : plant.transplantDate;
+            if (!activeGrowthStart) return; 
+            if (!plant.isEstablished && !plant.directSow) { svg.append('rect').attr('x', xScale(plant.startSeedsIndoorsDate)).attr('y', y).attr('width', xScale(plant.transplantDate) - xScale(plant.startSeedsIndoorsDate)).attr('height', 20).attr('fill', '#a7f3d0').append('title').text('Seeds Indoors'); }
+            let firstEventDate = firstFrostDate || xScale.domain()[1];
+            if(plant.hasBlooms && plant.bloomStartDate) firstEventDate = d3.min([firstEventDate, plant.bloomStartDate]);
+            if(plant.hasFruit && plant.harvestStartDate) firstEventDate = d3.min([firstEventDate, plant.harvestStartDate]);
+            svg.append('rect').attr('x', xScale(activeGrowthStart)).attr('y', y).attr('width', xScale(firstEventDate) - xScale(activeGrowthStart)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth');
+        }
+
+        // --- Event rendering (same for both types) ---
+        let lastEventDate = lastFrostDate;
+        if (plant.hasBlooms && plant.bloomStartDate && plant.bloomDuration) { const bloomEndDate = addDays(plant.bloomStartDate, plant.bloomDuration); svg.append('rect').attr('x', xScale(plant.bloomStartDate)).attr('y', y).attr('width', xScale(bloomEndDate) - xScale(plant.bloomStartDate)).attr('height', 20).attr('fill', plant.color).append('title').text('Bloom Window'); lastEventDate = d3.max([lastEventDate, bloomEndDate]); }
+        if (plant.hasFruit && plant.harvestStartDate && plant.harvestWindow) { const harvestEndDate = addDays(plant.harvestStartDate, plant.harvestWindow); const bloomEndDate = plant.bloomStartDate && plant.bloomDuration ? addDays(plant.bloomStartDate, plant.bloomDuration) : null; if (plant.hasBlooms && bloomEndDate < plant.harvestStartDate) { svg.append('rect').attr('x', xScale(bloomEndDate)).attr('y', y).attr('width', xScale(plant.harvestStartDate) - xScale(bloomEndDate)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth'); } svg.append('rect').attr('x', xScale(plant.harvestStartDate)).attr('y', y).attr('width', xScale(harvestEndDate) - xScale(plant.harvestStartDate)).attr('height', 20).attr('fill', plant.fruitColor|| '#f59e0b').append('title').text('Harvest Window'); lastEventDate = d3.max([lastEventDate, harvestEndDate]); }
+        
+        const endOfSeasonDate = firstFrostDate || xScale.domain()[1];
+        if (lastEventDate && lastEventDate < endOfSeasonDate) { svg.append('rect').attr('x', xScale(lastEventDate)).attr('y', y).attr('width', xScale(endOfSeasonDate) - xScale(lastEventDate)).attr('height', 20).attr('fill', '#34d399'); }
+
+        if (plant.hasPruningWindow && plant.pruneStartDate && plant.pruneWindowDays) { const pruneEndDate = addDays(plant.pruneStartDate, plant.pruneWindowDays); svg.append('rect').attr('x', xScale(plant.pruneStartDate)).attr('y', y).attr('width', xScale(pruneEndDate) - xScale(plant.pruneStartDate)).attr('height', 20).attr('fill', '#a16207').style('opacity', 0.8).append('title').text('Pruning Window'); }
+
+        svg.append('foreignObject').attr('x', 1120).attr('y', y).attr('width', 100).attr('height', 20).html(`<button onclick="openModal(${plant.id})" class="action-btn">✏️</button><button onclick="deletePlant(${plant.id})" class="action-btn delete">&times;</button>`);
+      });
+      
+      const frostDates = [];
+      if(lastFrostDate) frostDates.push({ date: lastFrostDate, label: "Last Frost" });
+      if(firstFrostDate) frostDates.push({ date: firstFrostDate, label: "First Frost" });
+      frostDates.forEach(frost => {
+          svg.append('line').attr('x1', xScale(frost.date)).attr('x2', xScale(frost.date)).attr('y1', 0).attr('y2', plants.length * 60 + 45).attr('stroke', '#3b82f6').attr('stroke-dasharray', '4');
+          svg.append('text').attr('x', xScale(frost.date)).attr('y', plants.length * 60 + 65).attr('text-anchor', 'middle').attr('fill', '#3b82f6').attr('font-size', '10px').text(frost.label);
+      });
+      svg.append('g').attr('transform', `translate(0, ${plants.length * 60 + 40})`).call(d3.axisBottom(xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b')));
+    }
+    
+    // --- INITIALIZE ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const detailsHeader = document.getElementById('project-details-header'), detailsPanel = document.getElementById('project-details-panel'), detailsIcon = document.getElementById('project-details-icon');
+        detailsHeader.addEventListener('click', () => { const isCollapsed = detailsPanel.classList.toggle('collapsed'); detailsIcon.classList.toggle('rotate-180', isCollapsed); detailsIcon.textContent = isCollapsed ? '▼' : '▲'; });
+        detailsPanel.classList.add('collapsed'); detailsIcon.classList.add('rotate-180'); detailsIcon.textContent = '▼';
+        document.getElementById('plant-form').addEventListener('submit', handleSubmit);
+        loadGarden(true); updateChart(); 
+    });
   </script>
 </body>
 </html>
+
