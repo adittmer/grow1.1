@@ -10,7 +10,7 @@
   <style>
     .hidden { display: none; }
     #project-details-panel {
-      max-height: 500px;
+      max-height: 800px;
       transition: all 0.4s ease-in-out;
       overflow: hidden;
     }
@@ -56,6 +56,8 @@
     }
     .action-btn:hover { background-color: #e5e7eb; }
     .action-btn.delete:hover { background-color: #fecaca; color: #dc2626; }
+    .expand-icon { cursor: pointer; transition: transform 0.2s; }
+    .plant-details-text { font-size: 12px; fill: #4b5563; }
   </style>
 </head>
 <body class="bg-green-50 text-gray-800">
@@ -71,19 +73,37 @@
       <h3 class="text-3xl font-semibold mb-6">Plan Your Garden</h3>
       <p class="mb-6">Visually track planting, growing, and event windows for all your plants.</p>
       
-      <div class="bg-white rounded-xl shadow mb-8 text-left max-w-md mx-auto">
+      <div class="bg-white rounded-xl shadow mb-8 text-left max-w-5xl mx-auto">
         <div id="project-details-header" class="p-6 flex justify-between items-center cursor-pointer">
           <h4 class="text-xl font-bold">⚙️ Project Details</h4>
           <span id="project-details-icon" class="text-xl font-bold transform transition-transform duration-300"></span>
         </div>
         <div id="project-details-panel" class="px-6 pb-6 overflow-hidden">
             <div class="pb-4">
-                <h5 class="text-lg font-semibold mb-2">Frost Dates (Optional)</h5>
-                <p class="text-sm text-gray-600 mb-4">Set your frost dates to anchor the planting schedule.</p>
-                <label for="last-frost">Last Frost Date:</label>
-                <input type="date" id="last-frost" class="border p-1 mb-2 w-full"/><br/>
-                <label for="first-frost">First Frost Date:</label>
-                <input type="date" id="first-frost" class="border p-1 mb-2 w-full"/><br/>
+                <label class="flex items-center space-x-2 font-semibold text-lg mb-2">
+                    <input type="checkbox" id="show-frost-dates" onchange="toggleFrostDateVisibility()" checked>
+                    <span>Show Frost Dates</span>
+                </label>
+                <div id="frost-date-inputs">
+                    <p class="text-sm text-gray-600 my-2">Set your frost dates to anchor the planting schedule.</p>
+                    <label for="last-frost">Last Frost Date:</label>
+                    <input type="date" id="last-frost" class="border p-1 mb-2 w-full"/><br/>
+                    <label for="first-frost">First Frost Date:</label>
+                    <input type="date" id="first-frost" class="border p-1 mb-2 w-full"/><br/>
+                </div>
+            </div>
+            <div class="border-t pt-4 pb-4">
+                <label class="flex items-center space-x-2 font-semibold text-lg mb-2">
+                    <input type="checkbox" id="show-stress-window" onchange="toggleStressWindowVisibility()" checked>
+                    <span>Show Heat Stress Window</span>
+                </label>
+                <div id="stress-window-inputs">
+                    <p class="text-sm text-gray-600 my-2">Mark days with temperatures typically above 85°F / 29°C.</p>
+                    <label for="stress-start">Stress Window Start:</label>
+                    <input type="date" id="stress-start" class="border p-1 mb-2 w-full"/><br/>
+                    <label for="stress-end">Stress Window End:</label>
+                    <input type="date" id="stress-end" class="border p-1 mb-2 w-full"/><br/>
+                </div>
             </div>
             <div class="border-t pt-4">
                 <h5 class="text-lg font-semibold mb-2">Data Management</h5>
@@ -96,7 +116,7 @@
         </div>
       </div>
 
-      <div class="mb-8">
+      <div class="mb-8 flex items-center justify-center space-x-4">
         <button onclick="openModal()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-bold text-lg shadow-md">
           ＋ Add New Plant
         </button>
@@ -119,8 +139,19 @@
 
         <div class="grid grid-cols-2 gap-4">
             <div>
+                <label for="scientific-name">Scientific Name:</label>
+                <input type="text" id="scientific-name" class="border p-1 mb-2 w-full"/><br/>
+            </div>
+            <div>
+                <label for="variety">Variety:</label>
+                <input type="text" id="variety" class="border p-1 mb-2 w-full"/><br/>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
                 <label for="plant-category">Category:</label>
-                <select id="plant-category" class="border p-1 mb-2 w-full"><option value="tree">Tree</option><option value="shrub">Shrub</option><option value="flower">Flower</option><option value="vine">Vine</option><option value="ground-cover">Ground Cover</option></select>
+                <select id="plant-category" class="border p-1 mb-2 w-full"><option value="tree">Tree</option><option value="shrub">Shrub</option><option value="flower">Flower</option><option value="vine">Vine</option><option value="ground-cover">Ground Cover</option><option value="generic">Plant (generic)</option></select>
             </div>
             <div>
                 <label for="plant-type">Type:</label>
@@ -141,7 +172,6 @@
                 <input type="checkbox" id="add-pruning" onchange="togglePruningFields()">
                 <span>Add Pruning Window</span>
             </label>
-            <!-- NEW: Waking up days input -->
             <div>
                 <label for="waking-up-days" class="font-semibold">Wakes up (days before last frost):</label>
                 <input type="number" id="waking-up-days" class="border p-1 w-full" value="30"/>
@@ -175,6 +205,18 @@
           <label for="fruit-color">Fruit Color:</label><input type="color" id="fruit-color" value="#db2777" class="border p-1 mb-2 w-full h-10"/><br/>
         </div>
 
+        <div class="mt-4 border-t pt-4">
+            <h5 class="font-semibold text-lg mb-2">Companion Plants</h5>
+            <textarea id="companion-plants" rows="3" class="border p-1 w-full" placeholder="e.g., Marigolds, Basil, Nasturtiums..."></textarea>
+        </div>
+
+        <div class="mt-4 border-t pt-4">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" id="add-to-library-checkbox">
+                <span>Submit this plant variety to the public library</span>
+            </label>
+        </div>
+
         <button type="submit" id="modal-submit-button" class="bg-green-600 text-white px-4 py-2 mt-4 rounded hover:bg-green-700 w-full">Add Plant</button>
       </form>
     </div>
@@ -183,22 +225,27 @@
   <footer class="bg-green-600 text-white text-center p-4 mt-10"><p>&copy; 2025 Grow Better | Built with 🌱</p></footer>
 
   <script>
-    // MODIFIED: Data structure updated for perennials
     let plants = [{
       id: 1, name: 'Raspberry', category: 'shrub', type: 'perennial',
+      scientificName: 'Rubus idaeus', variety: 'Heritage',
       isEstablished: true, hasBlooms: true, hasFruit: true,
       fruitColor: '#e30b5d',
       bloomStartDate: new Date('2025-05-20'), bloomDuration: 31, color: '#fecdd3',
       harvestStartDate: new Date('2025-06-25'), harvestWindow: 35,
       hasPruningWindow: true,
       pruneStartDate: new Date('2025-03-01'), pruneWindowDays: 28,
-      wakingUpDaysBeforeFrost: 45, // NEW
+      wakingUpDaysBeforeFrost: 45,
+      companionPlants: 'Marigolds, Garlic, Chives',
+      isExpanded: false
     }, {
-      id: 2, name: 'Zinnia', category: 'flower', type: 'annual', // MODIFIED
+      id: 2, name: 'Zinnia', category: 'flower', type: 'annual',
+      scientificName: 'Zinnia elegans', variety: 'California Giant',
       isEstablished: false, directSow: false,
       startSeedsIndoorsDate: new Date('2025-03-20'), transplantDate: new Date('2025-05-15'),
       hasBlooms: true, hasFruit: false,
       bloomStartDate: new Date('2025-06-15'), bloomDuration: 102, color: '#f43f5e',
+      companionPlants: 'Cosmos, Dahlias',
+      isExpanded: false
     }];
     
     let editState = { active: false, plantId: null };
@@ -211,10 +258,25 @@
     function togglePerennialFields() {
         const isPerennial = document.getElementById('plant-type').value === 'perennial';
         document.getElementById('perennial-options').classList.toggle('hidden', !isPerennial);
-        if (!isPerennial) {
-            document.getElementById('add-pruning').checked = false;
-            togglePruningFields();
+        if (!isPerennial) { document.getElementById('add-pruning').checked = false; togglePruningFields(); }
+    }
+    function toggleFrostDateVisibility() {
+        const isChecked = document.getElementById('show-frost-dates').checked;
+        document.getElementById('frost-date-inputs').classList.toggle('hidden', !isChecked);
+        if (!isChecked) {
+            document.getElementById('last-frost').value = '';
+            document.getElementById('first-frost').value = '';
         }
+        updateChart();
+    }
+    function toggleStressWindowVisibility() {
+        const isChecked = document.getElementById('show-stress-window').checked;
+        document.getElementById('stress-window-inputs').classList.toggle('hidden', !isChecked);
+        if (!isChecked) {
+            document.getElementById('stress-start').value = '';
+            document.getElementById('stress-end').value = '';
+        }
+        updateChart();
     }
     
     // --- UTILITY FUNCTIONS ---
@@ -228,13 +290,18 @@
     // --- LOCAL STORAGE FUNCTIONS ---
     function saveGarden() {
         localStorage.setItem('plantGanttGarden', JSON.stringify({
+            showFrostDates: document.getElementById('show-frost-dates').checked,
             lastFrost: document.getElementById('last-frost').value,
             firstFrost: document.getElementById('first-frost').value,
+            showStressWindow: document.getElementById('show-stress-window').checked,
+            stressStart: document.getElementById('stress-start').value,
+            stressEnd: document.getElementById('stress-end').value,
             plants: plants
         }));
         alert('✅ Your garden has been saved!');
     }
 
+    // MODIFIED: loadGarden function to handle empty saves
     function loadGarden(isInitialLoad = false) {
         const savedData = localStorage.getItem('plantGanttGarden');
         if (!savedData) {
@@ -242,19 +309,35 @@
             const year = new Date().getFullYear();
             document.getElementById('last-frost').value = `${year}-05-15`;
             document.getElementById('first-frost').value = `${year}-10-15`;
+            document.getElementById('stress-start').value = `${year}-07-01`;
+            document.getElementById('stress-end').value = `${year}-08-15`;
             return;
         }
         if (!isInitialLoad && !confirm('Loading data will overwrite unsaved changes. Continue?')) return;
         const gardenData = JSON.parse(savedData);
+        document.getElementById('show-frost-dates').checked = gardenData.showFrostDates !== false;
         document.getElementById('last-frost').value = gardenData.lastFrost || '';
         document.getElementById('first-frost').value = gardenData.firstFrost || '';
-        plants = gardenData.plants.map(plant => {
-            ['bloomStartDate', 'harvestStartDate', 'startSeedsIndoorsDate', 'transplantDate', 'pruneStartDate']
-            .forEach(field => { if (plant[field]) plant[field] = new Date(plant[field]); });
-            return plant;
-        });
-        updateChart();
-        if (!isInitialLoad) alert('✅ Garden loaded successfully!');
+        document.getElementById('show-stress-window').checked = gardenData.showStressWindow !== false;
+        document.getElementById('stress-start').value = gardenData.stressStart || '';
+        document.getElementById('stress-end').value = gardenData.stressEnd || '';
+        
+        // If saved plan has plants, load them. Otherwise, keep the default examples.
+        if (gardenData.plants && gardenData.plants.length > 0) {
+            plants = gardenData.plants.map(plant => {
+                ['bloomStartDate', 'harvestStartDate', 'startSeedsIndoorsDate', 'transplantDate', 'pruneStartDate']
+                .forEach(field => { if (plant[field]) plant[field] = new Date(plant[field]); });
+                plant.isExpanded = false;
+                return plant;
+            });
+        }
+        
+        toggleFrostDateVisibility();
+        toggleStressWindowVisibility();
+        if (!isInitialLoad) {
+            updateChart();
+            alert('✅ Garden loaded successfully!');
+        }
     }
     
     // --- MODAL & FORM LOGIC ---
@@ -269,6 +352,8 @@
         const plantToEdit = plants.find(p => p.id === plantId);
         if (plantToEdit) {
             document.getElementById('plant-name').value = plantToEdit.name;
+            document.getElementById('scientific-name').value = plantToEdit.scientificName || '';
+            document.getElementById('variety').value = plantToEdit.variety || '';
             document.getElementById('plant-category').value = plantToEdit.category;
             document.getElementById('plant-type').value = plantToEdit.type;
             document.getElementById('established').checked = plantToEdit.isEstablished;
@@ -282,11 +367,12 @@
             document.getElementById('harvest-start').value = formatDateForInput(plantToEdit.harvestStartDate);
             document.getElementById('harvest-window').value = plantToEdit.harvestWindow || 21;
             document.getElementById('fruit-color').value = plantToEdit.fruitColor || '#db2777';
+            document.getElementById('companion-plants').value = plantToEdit.companionPlants || '';
             if (plantToEdit.type === 'perennial') {
                 document.getElementById('add-pruning').checked = plantToEdit.hasPruningWindow;
                 document.getElementById('prune-start').value = formatDateForInput(plantToEdit.pruneStartDate);
                 document.getElementById('prune-window').value = plantToEdit.pruneWindowDays || 14;
-                document.getElementById('waking-up-days').value = plantToEdit.wakingUpDaysBeforeFrost || 30; // NEW
+                document.getElementById('waking-up-days').value = plantToEdit.wakingUpDaysBeforeFrost || 30;
             }
         }
       } else {
@@ -305,13 +391,18 @@
 
     function handleSubmit(event) {
         event.preventDefault();
+        const showFrost = document.getElementById('show-frost-dates').checked;
         const isEstablished = document.getElementById('established').checked, lastFrostValue = document.getElementById('last-frost').value;
-        if (!isEstablished && !lastFrostValue) { alert("Please set a 'Last Frost Date' before adding a new, non-established plant."); return; }
+        if (!isEstablished && !lastFrostValue && showFrost) { alert("Please set a 'Last Frost Date' before adding a new, non-established plant."); return; }
 
         const plantData = {
-            name: document.getElementById('plant-name').value, category: document.getElementById('plant-category').value,
+            name: document.getElementById('plant-name').value,
+            scientificName: document.getElementById('scientific-name').value,
+            variety: document.getElementById('variety').value,
+            category: document.getElementById('plant-category').value,
             type: document.getElementById('plant-type').value, isEstablished: isEstablished,
             hasBlooms: document.getElementById('blooms').checked, hasFruit: document.getElementById('bears-fruit').checked,
+            companionPlants: document.getElementById('companion-plants').value,
         };
         if (!plantData.name) { alert('Please enter a plant name.'); return; }
         if (!plantData.isEstablished) {
@@ -337,7 +428,7 @@
                 plantData.pruneStartDate = new Date(document.getElementById('prune-start').value + 'T00:00:00');
                 plantData.pruneWindowDays = parseInt(document.getElementById('prune-window').value, 10);
             }
-            plantData.wakingUpDaysBeforeFrost = parseInt(document.getElementById('waking-up-days').value, 10); // NEW
+            plantData.wakingUpDaysBeforeFrost = parseInt(document.getElementById('waking-up-days').value, 10);
         }
         
         if (editState.active) {
@@ -345,6 +436,7 @@
             if (plantIndex > -1) plants[plantIndex] = { ...plants[plantIndex], ...plantData };
         } else {
             plantData.id = Date.now();
+            plantData.isExpanded = false;
             plants.push(plantData);
         }
         closeModal();
@@ -368,11 +460,27 @@
         }
     }
 
+    function togglePlantDetails(plantId) {
+        const plant = plants.find(p => p.id === plantId);
+        if (plant) {
+            plant.isExpanded = !plant.isExpanded;
+            updateChart();
+        }
+    }
+
     // --- CHARTING LOGIC ---
     function updateChart() {
       d3.select('#chart').html('');
+      const showFrost = document.getElementById('show-frost-dates').checked;
       const lastFrostValue = document.getElementById('last-frost').value, firstFrostValue = document.getElementById('first-frost').value;
-      const lastFrostDate = lastFrostValue ? new Date(lastFrostValue) : null, firstFrostDate = firstFrostValue ? new Date(firstFrostValue) : null;
+      const lastFrostDate = (showFrost && lastFrostValue) ? new Date(lastFrostValue) : null;
+      const firstFrostDate = (showFrost && firstFrostValue) ? new Date(firstFrostValue) : null;
+      
+      const showStress = document.getElementById('show-stress-window').checked;
+      const stressStartValue = document.getElementById('stress-start').value, stressEndValue = document.getElementById('stress-end').value;
+      const stressStartDate = (showStress && stressStartValue) ? new Date(stressStartValue) : null;
+      const stressEndDate = (showStress && stressEndValue) ? new Date(stressEndValue) : null;
+
       if (plants.length === 0) { d3.select('#chart').append('p').attr('class', 'text-gray-500').text('Your garden is empty. Add a plant to get started!'); return; }
       
       const allDates = plants.flatMap(p => {
@@ -383,80 +491,108 @@
       });
       if (lastFrostDate) allDates.push(lastFrostDate);
       if (firstFrostDate) allDates.push(firstFrostDate);
+      if (stressStartDate) allDates.push(stressStartDate);
+      if (stressEndDate) allDates.push(stressEndDate);
       if (allDates.length === 0) { const today = new Date(); allDates.push(subtractDays(today, 30), addDays(today, 30)); }
       
       const minDate = d3.min(allDates), maxDate = d3.max(allDates);
       const xScale = d3.scaleTime().domain([subtractDays(minDate, 30), addDays(maxDate, 30)]).range([150, 1100]);
-      const svg = d3.select('#chart').append('svg').attr('width', 1200).attr('height', plants.length * 60 + 70);
       
-      plants.forEach((plant, index) => {
-        const y = index * 60 + 20;
-        svg.append('text').attr('x', 10).attr('y', y + 15).text(`${plant.name} (${plant.type})`).attr('class', 'plant-label');
+      let totalHeight = 70;
+      plants.forEach(p => { totalHeight += p.isExpanded ? 160 : 60; });
+      const svg = d3.select('#chart').append('svg').attr('width', 1200).attr('height', totalHeight);
+      
+      if (showStress && stressStartDate && stressEndDate && stressStartDate < stressEndDate) {
+          svg.append('rect').attr('x', xScale(stressStartDate)).attr('y', 0).attr('width', xScale(stressEndDate) - xScale(stressStartDate))
+             .attr('height', totalHeight - 30).attr('fill', '#fee2e2').append('title').text(`Heat Stress Window`);
+      }
+
+      let currentY = 20;
+      plants.forEach((plant) => {
+        const y = currentY;
+        const plantGroup = svg.append('g').attr('transform', `translate(0, ${y})`);
         
-        // MODIFIED: Perennial drawing logic
+        plantGroup.append('path')
+          .attr('d', 'M0 0 L8 5 L0 10 Z')
+          .attr('class', 'expand-icon')
+          .attr('transform', `translate(5, 7) ${plant.isExpanded ? 'rotate(90 4 5)' : ''}`)
+          .attr('fill', '#6b7280')
+          .on('click', () => togglePlantDetails(plant.id));
+
+        plantGroup.append('text').attr('x', 20).attr('y', 15).text(plant.name).attr('class', 'plant-label');
+        
         if (plant.type === 'perennial') {
-            const chartStart = xScale.domain()[0];
-            const chartEnd = xScale.domain()[1];
+            const chartStart = xScale.domain()[0], chartEnd = xScale.domain()[1];
             const endOfSeasonDate = firstFrostDate || chartEnd;
             let wakingUpDate = lastFrostDate;
-            if (lastFrostDate && plant.wakingUpDaysBeforeFrost) {
-                wakingUpDate = subtractDays(lastFrostDate, plant.wakingUpDaysBeforeFrost);
-            }
-
-            // Dormant bar for the whole year
-            svg.append('rect').attr('x', xScale(chartStart)).attr('y', y + 5).attr('width', xScale(chartEnd) - xScale(chartStart)).attr('height', 10).attr('fill', '#d1d5db').append('title').text('Dormant');
-            
-            // Waking up bar
-            if(wakingUpDate) {
-                 svg.append('rect').attr('x', xScale(wakingUpDate)).attr('y', y).attr('width', xScale(lastFrostDate) - xScale(wakingUpDate)).attr('height', 20).attr('fill', '#a7f3d0').append('title').text('Waking Up');
-            }
-
-            // Active growth bar from last frost to first event or end of season
+            if (lastFrostDate && plant.wakingUpDaysBeforeFrost) { wakingUpDate = subtractDays(lastFrostDate, plant.wakingUpDaysBeforeFrost); }
+            plantGroup.append('rect').attr('x', xScale(chartStart)).attr('y', 5).attr('width', xScale(chartEnd) - xScale(chartStart)).attr('height', 10).attr('fill', '#d1d5db').append('title').text('Dormant');
+            if(wakingUpDate) { plantGroup.append('rect').attr('x', xScale(wakingUpDate)).attr('y', 0).attr('width', xScale(lastFrostDate) - xScale(wakingUpDate)).attr('height', 20).attr('fill', '#a7f3d0').append('title').text('Waking Up'); }
             let firstEventDate = endOfSeasonDate;
             if (plant.hasBlooms && plant.bloomStartDate) firstEventDate = d3.min([firstEventDate, plant.bloomStartDate]);
             if (plant.hasFruit && plant.harvestStartDate) firstEventDate = d3.min([firstEventDate, plant.harvestStartDate]);
-            svg.append('rect').attr('x', xScale(lastFrostDate)).attr('y', y).attr('width', xScale(firstEventDate) - xScale(lastFrostDate)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth');
-        
-        } else { // Annual logic
+            if (lastFrostDate) plantGroup.append('rect').attr('x', xScale(lastFrostDate)).attr('y', 0).attr('width', xScale(firstEventDate) - xScale(lastFrostDate)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth');
+        } else {
             const activeGrowthStart = plant.isEstablished ? lastFrostDate : plant.transplantDate;
-            if (!activeGrowthStart) return; 
-            if (!plant.isEstablished && !plant.directSow) { svg.append('rect').attr('x', xScale(plant.startSeedsIndoorsDate)).attr('y', y).attr('width', xScale(plant.transplantDate) - xScale(plant.startSeedsIndoorsDate)).attr('height', 20).attr('fill', '#a7f3d0').append('title').text('Seeds Indoors'); }
+            if (!activeGrowthStart && !plant.isEstablished) return; 
+            if (activeGrowthStart && !plant.isEstablished && !plant.directSow) { plantGroup.append('rect').attr('x', xScale(plant.startSeedsIndoorsDate)).attr('y', 0).attr('width', xScale(plant.transplantDate) - xScale(plant.startSeedsIndoorsDate)).attr('height', 20).attr('fill', '#a7f3d0').append('title').text('Seeds Indoors'); }
             let firstEventDate = firstFrostDate || xScale.domain()[1];
             if(plant.hasBlooms && plant.bloomStartDate) firstEventDate = d3.min([firstEventDate, plant.bloomStartDate]);
             if(plant.hasFruit && plant.harvestStartDate) firstEventDate = d3.min([firstEventDate, plant.harvestStartDate]);
-            svg.append('rect').attr('x', xScale(activeGrowthStart)).attr('y', y).attr('width', xScale(firstEventDate) - xScale(activeGrowthStart)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth');
+            if(activeGrowthStart) plantGroup.append('rect').attr('x', xScale(activeGrowthStart)).attr('y', 0).attr('width', xScale(firstEventDate) - xScale(activeGrowthStart)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth');
         }
 
-        // --- Event rendering (same for both types) ---
         let lastEventDate = lastFrostDate;
-        if (plant.hasBlooms && plant.bloomStartDate && plant.bloomDuration) { const bloomEndDate = addDays(plant.bloomStartDate, plant.bloomDuration); svg.append('rect').attr('x', xScale(plant.bloomStartDate)).attr('y', y).attr('width', xScale(bloomEndDate) - xScale(plant.bloomStartDate)).attr('height', 20).attr('fill', plant.color).append('title').text('Bloom Window'); lastEventDate = d3.max([lastEventDate, bloomEndDate]); }
-        if (plant.hasFruit && plant.harvestStartDate && plant.harvestWindow) { const harvestEndDate = addDays(plant.harvestStartDate, plant.harvestWindow); const bloomEndDate = plant.bloomStartDate && plant.bloomDuration ? addDays(plant.bloomStartDate, plant.bloomDuration) : null; if (plant.hasBlooms && bloomEndDate < plant.harvestStartDate) { svg.append('rect').attr('x', xScale(bloomEndDate)).attr('y', y).attr('width', xScale(plant.harvestStartDate) - xScale(bloomEndDate)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth'); } svg.append('rect').attr('x', xScale(plant.harvestStartDate)).attr('y', y).attr('width', xScale(harvestEndDate) - xScale(plant.harvestStartDate)).attr('height', 20).attr('fill', plant.fruitColor|| '#f59e0b').append('title').text('Harvest Window'); lastEventDate = d3.max([lastEventDate, harvestEndDate]); }
+        if (plant.hasBlooms && plant.bloomStartDate && plant.bloomDuration) { const bloomEndDate = addDays(plant.bloomStartDate, plant.bloomDuration); plantGroup.append('rect').attr('x', xScale(plant.bloomStartDate)).attr('y', 0).attr('width', xScale(bloomEndDate) - xScale(plant.bloomStartDate)).attr('height', 20).attr('fill', plant.color).append('title').text('Bloom Window'); lastEventDate = d3.max([lastEventDate, bloomEndDate].filter(Boolean)); }
+        if (plant.hasFruit && plant.harvestStartDate && plant.harvestWindow) { const harvestEndDate = addDays(plant.harvestStartDate, plant.harvestWindow); const bloomEndDate = plant.bloomStartDate && plant.bloomDuration ? addDays(plant.bloomStartDate, plant.bloomDuration) : null; if (plant.hasBlooms && bloomEndDate < plant.harvestStartDate) { plantGroup.append('rect').attr('x', xScale(bloomEndDate)).attr('y', 0).attr('width', xScale(plant.harvestStartDate) - xScale(bloomEndDate)).attr('height', 20).attr('fill', '#34d399').append('title').text('Active Growth'); } plantGroup.append('rect').attr('x', xScale(plant.harvestStartDate)).attr('y', 0).attr('width', xScale(harvestEndDate) - xScale(plant.harvestStartDate)).attr('height', 20).attr('fill', plant.fruitColor|| '#f59e0b').append('title').text('Harvest Window'); lastEventDate = d3.max([lastEventDate, harvestEndDate].filter(Boolean)); }
         
         const endOfSeasonDate = firstFrostDate || xScale.domain()[1];
-        if (lastEventDate && lastEventDate < endOfSeasonDate) { svg.append('rect').attr('x', xScale(lastEventDate)).attr('y', y).attr('width', xScale(endOfSeasonDate) - xScale(lastEventDate)).attr('height', 20).attr('fill', '#34d399'); }
-
-        if (plant.hasPruningWindow && plant.pruneStartDate && plant.pruneWindowDays) { const pruneEndDate = addDays(plant.pruneStartDate, plant.pruneWindowDays); svg.append('rect').attr('x', xScale(plant.pruneStartDate)).attr('y', y).attr('width', xScale(pruneEndDate) - xScale(plant.pruneStartDate)).attr('height', 20).attr('fill', '#a16207').style('opacity', 0.8).append('title').text('Pruning Window'); }
-
-        svg.append('foreignObject').attr('x', 1120).attr('y', y).attr('width', 100).attr('height', 20).html(`<button onclick="openModal(${plant.id})" class="action-btn">✏️</button><button onclick="deletePlant(${plant.id})" class="action-btn delete">&times;</button>`);
+        if (lastEventDate && lastEventDate < endOfSeasonDate) { plantGroup.append('rect').attr('x', xScale(lastEventDate)).attr('y', 0).attr('width', xScale(endOfSeasonDate) - xScale(lastEventDate)).attr('height', 20).attr('fill', '#34d399'); }
+        if (plant.hasPruningWindow && plant.pruneStartDate && plant.pruneWindowDays) { const pruneEndDate = addDays(plant.pruneStartDate, plant.pruneWindowDays); plantGroup.append('rect').attr('x', xScale(plant.pruneStartDate)).attr('y', 0).attr('width', xScale(pruneEndDate) - xScale(plant.pruneStartDate)).attr('height', 20).attr('fill', '#a16207').style('opacity', 0.8).append('title').text('Pruning Window'); }
+        
+        plantGroup.append('foreignObject').attr('x', 1120).attr('y', 0).attr('width', 100).attr('height', 20).html(`<button onclick="openModal(${plant.id})" class="action-btn">✏️</button><button onclick="deletePlant(${plant.id})" class="action-btn delete">&times;</button>`);
+        
+        if (plant.isExpanded) {
+            let detailY = 35;
+            const detailsGroup = plantGroup.append('g').attr('class', 'plant-details');
+            if (plant.scientificName) { detailsGroup.append('text').attr('x', 20).attr('y', detailY).attr('class', 'plant-details-text').text(`Scientific Name: ${plant.scientificName}`); detailY += 18; }
+            if (plant.variety) { detailsGroup.append('text').attr('x', 20).attr('y', detailY).attr('class', 'plant-details-text').text(`Variety: ${plant.variety}`); detailY += 18; }
+            if (plant.hasBlooms) { detailsGroup.append('text').attr('x', 20).attr('y', detailY).attr('class', 'plant-details-text').text(`Bloom: ${formatDateForInput(plant.bloomStartDate)} for ${plant.bloomDuration} days`); detailY += 18; }
+            if (plant.hasFruit) { detailsGroup.append('text').attr('x', 20).attr('y', detailY).attr('class', 'plant-details-text').text(`Harvest: ${formatDateForInput(plant.harvestStartDate)} for ${plant.harvestWindow} days`); detailY += 18; }
+            if (plant.hasPruningWindow) { detailsGroup.append('text').attr('x', 20).attr('y', detailY).attr('class', 'plant-details-text').text(`Prune: ${formatDateForInput(plant.pruneStartDate)} for ${plant.pruneWindowDays} days`); detailY += 18; }
+            if (plant.companionPlants) { detailsGroup.append('text').attr('x', 20).attr('y', detailY).attr('class', 'plant-details-text').text(`Companions: ${plant.companionPlants}`); }
+            currentY += 160;
+        } else {
+            currentY += 60;
+        }
       });
       
-      const frostDates = [];
-      if(lastFrostDate) frostDates.push({ date: lastFrostDate, label: "Last Frost" });
-      if(firstFrostDate) frostDates.push({ date: firstFrostDate, label: "First Frost" });
-      frostDates.forEach(frost => {
-          svg.append('line').attr('x1', xScale(frost.date)).attr('x2', xScale(frost.date)).attr('y1', 0).attr('y2', plants.length * 60 + 45).attr('stroke', '#3b82f6').attr('stroke-dasharray', '4');
-          svg.append('text').attr('x', xScale(frost.date)).attr('y', plants.length * 60 + 65).attr('text-anchor', 'middle').attr('fill', '#3b82f6').attr('font-size', '10px').text(frost.label);
-      });
-      svg.append('g').attr('transform', `translate(0, ${plants.length * 60 + 40})`).call(d3.axisBottom(xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b')));
+      const axisY = totalHeight - 30;
+      if (showFrost) {
+          const frostDates = [];
+          if(lastFrostDate) frostDates.push({ date: lastFrostDate, label: "Last Frost" });
+          if(firstFrostDate) frostDates.push({ date: firstFrostDate, label: "First Frost" });
+          frostDates.forEach(frost => {
+              svg.append('line').attr('x1', xScale(frost.date)).attr('x2', xScale(frost.date)).attr('y1', 0).attr('y2', axisY + 5).attr('stroke', '#3b82f6').attr('stroke-dasharray', '4');
+              svg.append('text').attr('x', xScale(frost.date)).attr('y', axisY + 25).attr('text-anchor', 'middle').attr('fill', '#3b82f6').attr('font-size', '10px').text(frost.label);
+          });
+      }
+
+      svg.append('g').attr('transform', `translate(0, ${axisY})`).call(d3.axisBottom(xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b')));
     }
     
     // --- INITIALIZE ---
+    // MODIFIED: Initialization logic to ensure chart draws on first load
     document.addEventListener('DOMContentLoaded', () => {
         const detailsHeader = document.getElementById('project-details-header'), detailsPanel = document.getElementById('project-details-panel'), detailsIcon = document.getElementById('project-details-icon');
         detailsHeader.addEventListener('click', () => { const isCollapsed = detailsPanel.classList.toggle('collapsed'); detailsIcon.classList.toggle('rotate-180', isCollapsed); detailsIcon.textContent = isCollapsed ? '▼' : '▲'; });
         detailsPanel.classList.add('collapsed'); detailsIcon.classList.add('rotate-180'); detailsIcon.textContent = '▼';
         document.getElementById('plant-form').addEventListener('submit', handleSubmit);
-        loadGarden(true); updateChart(); 
+        document.getElementById('stress-start').addEventListener('change', updateChart);
+        document.getElementById('stress-end').addEventListener('change', updateChart);
+        
+        loadGarden(true);
+        updateChart(); // This ensures the chart renders with default or loaded data.
     });
   </script>
 </body>
